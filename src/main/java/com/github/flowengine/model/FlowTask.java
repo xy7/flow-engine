@@ -469,6 +469,56 @@ public class FlowTask extends FlowTaskDef<FlowTask> implements Comparable<FlowTa
 			}
 		}
 	}
+	
+	//exec tasks but do not wait
+	public static void execAllWithoutWait(final FlowContext context, final boolean execParents,final boolean execChilds, Collection<FlowTask> tasks) {
+		if(CollectionUtils.isEmpty(tasks)) {
+			return;
+		}
+		
+		Assert.notNull(context.getExecutorService(),"context.getExecutorService() must be not null");
+		
+		List<FlowTask> sortedTasks = new ArrayList<FlowTask>(tasks);
+		Collections.sort(sortedTasks);
+
+		for(final FlowTask depend : sortedTasks) {
+			context.getExecutorService().execute(new Runnable() {
+				public void run() {
+					try {
+						depend.execWithoutWait(context,execParents,execChilds);
+					}catch(Exception e) {
+						e.printStackTrace();
+					}
+				}
+			});
+		}
+
+	}
+	
+	//exec task but do not wait
+	public void execWithoutWait(final FlowContext context,final boolean execParents,final boolean execChilds) {
+		executed = true;
+		logger.info("start exec task,id:" + getId() + " execParents:"+execParents+" execChilds:"+execChilds);
+		
+		beforeExec(context);
+		
+		if(execParents) {
+			execAllWithoutWait(context,execParents, execChilds,getParents());
+		}
+		
+		
+		try {
+			execSelf(execParents,context);
+		} catch (Exception e) {
+			throw new RuntimeException("error on exec,flowTask:"+this,e);
+		} 
+		
+		if(execChilds) {
+			execAllWithoutWait(context,execParents, execChilds,getChilds());
+		}
+		
+		afterExec(context);
+	}
 
 	@Override
 	public void afterPropertiesSet() throws Exception {

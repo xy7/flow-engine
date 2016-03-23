@@ -72,12 +72,12 @@ public class FlowEngine {
 	public FlowContext exec(Flow flow, String startTaskId, FlowContext context) {
 		FlowTask task = flow.getNode(startTaskId);
 		Assert.notNull(task,"not found by taskId:"+startTaskId);
-		task.exec(context,false,true);
+		task.execWithoutWait(context,false,true);
 		return context;
 	}
 	
 	public FlowContext exec(Flow flow, List<FlowTask> tasks, FlowContext context) {
-		FlowTask.execAll(context, false, true, tasks, true);
+		FlowTask.execAllWithoutWait(context, false, true, tasks);
 		return context;
 	}
 

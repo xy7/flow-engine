@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import com.github.flowengine.engine.FlowEngine;
@@ -100,4 +101,20 @@ public class FlowContext implements Serializable {
 		return executorService.awaitTermination(timeout, unit);
 	}
 	
+	//shut down untill all tasks have been finished
+	public boolean awaitTerminationAfterAllFinish(long timeout, TimeUnit unit) throws InterruptedException {
+		ThreadPoolExecutor tpe = (ThreadPoolExecutor)getExecutorService();
+		int nodeSize = flow.getNodes().size();
+		while(tpe.getCompletedTaskCount() < nodeSize){
+			try {
+				Thread.sleep(1000*10);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		tpe.shutdown();
+		return tpe.awaitTermination(timeout, unit);
+	}
 }
